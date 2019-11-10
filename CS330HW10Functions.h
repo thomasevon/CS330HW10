@@ -14,6 +14,7 @@
 void updateL1();
 void updateTLB();
 void updateL2();
+void generatePA();
 void updatePT();
 
 // accessors
@@ -27,6 +28,39 @@ void L1D_Access();
 
 //------------------------------------------------------------------------
 // Utility Functions:
+
+// generates the final report to spit out
+void generateReport() {
+	printf("%s\n", "---------------------------------------------------------");
+	printf("%s\n\n", "This is the report for the addstream.txt process: ");
+	printf("%s%d\n", "1. Total Clocks Required: ", CLOCKS);
+	printf("%s%d\n", "2. Total Page Faults: ", PAGEFAULTS);
+	printf("%s%d\n", "3. Total disk accesses: ", DISKACCESSES);
+	printf("%s%d\n", "4. Total buffer accesses: ", BUFACCESSES);
+
+	int L1Ihits = L1IHITS;
+	int L1Iaccesses = L1IACCESSES;
+	double L1IHitRate = (double)L1Ihits / (double)L1Iaccesses;
+	printf("%s%f\n", "5. L1I hit rate: ", L1IHitRate);
+
+	int L1Dhits = L1DHITS;
+	int L1Daccesses = L1DACCESSES;
+	double L1DHitRate = (double)L1Dhits / (double)L1Daccesses;
+	printf("%s%f\n", "6. L1D hit rate: ", L1DHitRate);
+
+	int TLBhits = TLBHITS;
+	int TLBaccesses = TLBACCESSES;
+	double TLBHitRate = (double)TLBhits / (double)TLBaccesses;
+	printf("%s%f\n", "7. TLB hit rate: ", TLBHitRate);
+
+	int L2hits = L2HITS;
+	int L2accesses = L2ACCESSES;
+	double L2HitRate = (double)L2hits / (double)L2accesses;
+	printf("%s%f\n", "8. L2 hit rate: ", L2HitRate);
+
+	printf("\n");
+	printf("%s\n", "---------------------------------------------------------");
+}
 
 // generate ca.pa, ca.L2Index, and ca.buffsector
 void generatePA() {
@@ -243,7 +277,7 @@ void L1I_Access() {
 	L1IACCESSES++;
 	unsigned int index = ca.L1Index; // ca.va[12-4]
 	if (L1IArr[index].page == ca.pn && L1IArr[index].v == 1) { // hit
-		L1IHITS++;
+		L1IHITS  += 4;
 		L1IArr[index].d = 1; // set dirty
 		if (TESTFLOW == 1) printf("L1Ihit\n");
 	}
@@ -259,13 +293,14 @@ void L1D_Access() {
 	CLOCKS += 4;
 	L1DACCESSES++;
 	unsigned int index = ca.L1Index; // ca.va[12-4]
-	if (L1DArr[index].page == ca.pn && L1DArr[index].v == 1) // hit
-		L1DHITS++;
+	if (L1DArr[index].page == ca.pn && L1DArr[index].v == 1) {// hit
+		L1DHITS += 1;
 		L1DArr[index].d = 1; // set dirty
-		if (TESTFLOW == 1) printf("L1D hit\n");
+		printf("L1D hit\n");
+	}
 	else { // miss
 		TLB_Access();
-		if (TESTFLOW == 1) printf("L1D miss\n");
+		printf("L1D miss\n");
 	}
 	return;
 }
@@ -300,29 +335,6 @@ void TLB_Access() {
 	return;
 }
 
-
-void buf_Access() {
-	CLOCKS += 200;
-	BUFACCESSES++;
-	unsigned int index = ca.pn & 15; // 12 = 0xF mask for rightmost 4 bits
-	if (BUFArr[index].frame == ca.fn) { // hit
-		// update PT
-		// update L2
-		// update TLB
-		// update L1
-
-
-		if (TESTFLOW == 1) printf("buffer hit\n");
-	}
-	else { // miss
-		// disk_Access();
-		if (TESTFLOW == 1) printf("buffer miss\n");
-		disk_Access();
-	}
-	return;
-}
-
-
 void PT_Lookup() {
 	CLOCKS += 50;
 	unsigned int index = ca.PTIndex;
@@ -340,29 +352,41 @@ void PT_Lookup() {
 
 void disk_Access() {
 	CLOCKS += 5000;
-	DISKACCESSES++;
-	updatePT();
-	if (TESTFLOW == 1) printf("Disk Accessed\n");
+	if (ca.bufsector == BUFSECTOR) { // buffer hit
+		BUFACCESSES++;
+		PTArr[ca.PTIndex].frame = ca.fn;
+		PTArr[ca.PTIndex].v == 1;
+	}
+	else {
+		DISKACCESSES++;
+		updatePT();
+		if (TESTFLOW == 1) printf("Disk Accessed\n");
+	}
 	return;
 }
 
 
 void L2_Access() {
+	L2ACCESSES++;
 	// simulate 4-way set associative by searching all 4 L2 Arrays
 	unsigned int index = ca.L2Index;
 	if (L2ArrA[index].frame == ca.fn && L2ArrA[index].v == 1) { // hit A
+		L2HITS++;
 		updateL1();
 		if (TESTFLOW == 1) printf("L2Ahit\n");
 	}
 	else if (L2ArrB[index].frame == ca.fn && L2ArrB[index].v == 1) { // hit B
+		L2HITS++;
 		updateL1();
 		if (TESTFLOW == 1) printf("L2Bhit\n");
 	}
 	else if (L2ArrC[index].frame == ca.fn && L2ArrC[index].v == 1) { // hit C
+		L2HITS++;
 		updateL1();
 		if (TESTFLOW == 1) printf("L2Chit\n");
 	}
 	else if (L2ArrD[index].frame == ca.fn && L2ArrD[index].v == 1) { // hit D
+		L2HITS++;
 		updateL1();
 		if (TESTFLOW == 1) printf("L2Dhit\n");
 	}
@@ -426,18 +450,12 @@ void updateTLB() {
 
 void updatePT() {
 	CLOCKS += 50;
-	if (ca.bufsector == BUFSECTOR) { // buffer hit
-		PTArr[ca.PTIndex].frame = ca.fn;
-		PTArr[ca.PTIndex].v == 1;
-	}
-	else { // buffer miss
-		PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame; // pull in frame from freeTable
-		PTArr[ca.PTIndex].v == 1;
-		ca.fn = FTArr[FREEPTR].frame; // update ca frame with new frame
-		generatePA();
-		BUFSECTOR = ca.bufsector; // update the buffer
-		FREEPTR++;
-	}
+	PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame; // pull in frame from freeTable
+	PTArr[ca.PTIndex].v == 1;
+	ca.fn = FTArr[FREEPTR].frame; // update ca frame with new frame
+	generatePA();
+	BUFSECTOR = ca.bufsector; // update the buffer
+	FREEPTR++;
 }
 
 #endif

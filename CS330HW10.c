@@ -69,5 +69,6 @@ int main()
 			L1D_Access();
 		}
     }
+	generateReport(); // print out final report and exit
 	return 0;
 }
