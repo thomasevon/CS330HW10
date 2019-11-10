@@ -19,7 +19,7 @@ int main()
 
 	// read in file
 	char line[RSIZ][LSIZ];
-	char fname[15] = "addstream.txt";
+	char fname[20] = "addstream.txt";
 	char* processStr;
     FILE *fptr = NULL;
 	int i = 0;
