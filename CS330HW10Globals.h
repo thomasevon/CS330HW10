@@ -7,12 +7,12 @@
 #define CS330HW10GLOBALS_H
 
 // constants:
-int L1SIZE = 512;
-int L2SIZE = 1024;
-int PTSIZE = 170000; // actual size should be 2^20, 1048576
-int TLBSIZE = 256;
-int FTSIZE = 170000; // actual size should be 2^24, 16777216
-int BUFSIZE = 16; 
+#define L1SIZE 512
+#define L2SIZE 1024
+#define PTSIZE 170000 // actual size should be 2^20, 1048576
+#define TLBSIZE 256
+#define FTSIZE 170000 // actual size should be 2^24, 16777216
+#define BUFSIZE 16
 
 // globals:
 int CLOCKS;				// total process clocks
@@ -32,7 +32,7 @@ int	PAGEFAULTS;			// total page faults
 struct ca {
 	char typeOfAccess;
 	unsigned int va, pn, fn, offset, pa, L1Index, L2Index;
-	int bytes; 
+	int bytes;
 }; // currentAccess struct
 
 
@@ -60,27 +60,36 @@ struct TLB {
 
 struct FT {
 	unsigned int frame;
-	int* freePtr; 	
+	int* freePtr;
 };
 
 struct BUF {
 	int v, d;
-	unsigned int frame; 
+	unsigned int frame;
 };
 
 struct PT {
 	int v, d;
-	unsigned int frame; 
+	unsigned int frame;
 };
 
 // instantiate structures:
-struct ca ca;			
+struct ca ca;
 struct L1I L1I;
 struct L1D L1D;
-struct L2 L2; 
+struct L2 L2;
 struct TLB TLB;
 struct PT PT;
-struct BUF BUF; 
+struct BUF BUF;
 struct FT FT;
 
-#endif 
+// declar arrays:
+struct L1I L1IArr[L1SIZE];
+struct L1D L1DArr[L1SIZE];
+struct L2 L2Arr[L2SIZE];
+struct TLB TLBArr[TLBSIZE];
+struct PT PTArr[PTSIZE];
+struct BUF BUFArr[BUFSIZE];
+struct FT FTArr[FTSIZE];
+
+#endif
