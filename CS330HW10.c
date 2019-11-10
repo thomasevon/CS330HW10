@@ -56,8 +56,6 @@ int main()
 		ca.pn = pageNumber; // save pageNumber into struct
 		ca.L1Index = ca.va >> 4; // shift off byte_selctor bits
 		ca.L1Index = ca.L1Index & 511; // 511 = 0x1FF mask
-		ca.L2Index = ca.va >> 5; // shift off byte_selctor bits
-		ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
 		ca.PTIndex = ca.pn & 262143; // 262143 = 0x3FFFF mask
 
 		// process everything - simulate virtual memory

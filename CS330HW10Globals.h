@@ -15,27 +15,29 @@
 #define BUFSIZE 16
 
 // globals:
-int CLOCKS;				// total process clocks
-int	L1IACCESSES;	 	// total L1I total accesses
-int	L1IHITS;			// total L1I hits
-int L1DACCESSES;		// total L1D total accesses
-int L1DHITS;			// total L1D hits
-int	L2ACCESSES;			// total L2 accesses
-int L2HITS;				// total L2 hits
-int BUFACCESSES;		// total buffer accesses
-int DISKACCESSES;		// total disk accesses
-int TLBACCESSES;		// total TLB accesses
-int TLBHITS;			// total TLB hits
-int	PAGEFAULTS;			// total page faults
-char L2_LRU;			// least-recently used tracker for L2 cache
-int TESTFLOW = 1;  		// gauge to turn on printf statements
-int TLBPTR = 0;			// pointer to the next free entry in TLB array
+int CLOCKS;						// total process clocks
+int	L1IACCESSES;	 	 		// total L1I total accesses
+int	L1IHITS;					// total L1I hits
+int L1DACCESSES;				// total L1D total accesses
+int L1DHITS;					// total L1D hits
+int	L2ACCESSES;					// total L2 accesses
+int L2HITS;						// total L2 hits
+int BUFACCESSES;				// total buffer accesses
+int DISKACCESSES;				// total disk accesses
+int TLBACCESSES;				// total TLB accesses
+int TLBHITS;					// total TLB hits
+int	PAGEFAULTS;					// total page faults
+char L2_LRU;					// least-recently used tracker for L2 cache
+int TESTFLOW = 1;  				// gauge to turn on printf statements
+int TLBPTR = 0;					// pointer to the next free entry in TLB array
+unsigned int FREEPTR = 262144;  // first free entry contains this frame number
+unsigned int BUFSECTOR; 		// buffer sector
 
 
 // structs:
 struct ca {
 	char typeOfAccess;
-	unsigned int va, pn, fn, offset, pa, L1Index, L2Index, PTIndex;
+	unsigned int va, pn, fn, offset, pa, L1Index, L2Index, PTIndex, bufsector;
 	int bytes;
 }; // currentAccess struct
 

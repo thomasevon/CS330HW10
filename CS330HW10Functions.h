@@ -14,11 +14,12 @@
 void updateL1();
 void updateTLB();
 void updateL2();
+void updatePT();
 
 // accessors
-void disk_access();
+void disk_Access();
 void PT_Lookup();
-void buf_access();
+void buf_Access();
 void L2_Access();
 void TLB_Access();
 void L1I_Access();
@@ -26,6 +27,22 @@ void L1D_Access();
 
 //------------------------------------------------------------------------
 // Utility Functions:
+
+// generate ca.pa, ca.L2Index, and ca.buffsector
+void generatePA() {
+	// pre: ca must have a fn loaded in
+	// post: ca.pa, ca.L2Index, and ca.buffsector are created
+	// generate pa
+	unsigned int loader = ca.fn << 12; // shift fn left to prep for OR
+	ca.pa = loader | ca.offset; // pa is generated
+
+	// generate L2Index for L2_Access
+	ca.L2Index = ca.pa >> 5; // shift off byte_selctor bits
+	ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
+
+	ca.bufsector = ca.pa >> 16;
+}
+
 
 // displays array
 void displayArray(int count) {
@@ -115,8 +132,10 @@ void init_arrays() {
 		PTArr[e].frame = 0;
 	}
 
+	unsigned int runner = FREEPTR;
 	for (int f = 0; f < FTSIZE; f++) {
-		FTArr[f].frame = 0;
+		FTArr[f].frame = runner;
+		runner++; // shift to next available frame
 	}
 
 	for (int g = 0; g < BUFSIZE; g++) {
@@ -255,27 +274,34 @@ void L1D_Access() {
 void TLB_Access() {
 	// TLB doesn't cost any clocks
 	TLBACCESSES++;
-	unsigned int index = TLBPTR;
-	if (TLBArr[index].frame = ca.fn && TLBArr[index].v == 1) { // hit
+	int hitIndex;
+	int hit = 0; // flag to indicate if there is a hit
+	for (int index = 0; index <TLBSIZE; index++) { // linear search of TLB
+		if (TLBArr[index].page = ca.pn && TLBArr[index].v == 1) // hit
+			hit = 1;
+			hitIndex = index;
+	}
+
+	if (hit == 1) {
 		TLBHITS++;
-		updateL1(); // update the appropriate L1 cache
-
 		// generate pa and fn and store into ca:
-
-		// update the L2 cache using LRU:
-
-
+		ca.fn = TLBArr[hitIndex].frame; // store frame into ca from TLB
+		generatePA(); // store pa and L2Index into ca struct
+		L2_Access(); // access L2
 		if (TESTFLOW == 1) printf("TLB hit\n");
 	}
-	else { // miss
-		PT_Lookup();
+	else if (hit == 0) { // miss
+		PT_Lookup(); // access Page Table, will give pack fn
+		updateTLB();
+		generatePA(); // store pa and L2Index into ca struct
+		L2_Access();
 		if (TESTFLOW == 1) printf("TLB miss\n");
 	}
 	return;
 }
 
 
-void buf_access() {
+void buf_Access() {
 	CLOCKS += 200;
 	BUFACCESSES++;
 	unsigned int index = ca.pn & 15; // 12 = 0xF mask for rightmost 4 bits
@@ -291,7 +317,7 @@ void buf_access() {
 	else { // miss
 		// disk_Access();
 		if (TESTFLOW == 1) printf("buffer miss\n");
-		disk_access();
+		disk_Access();
 	}
 	return;
 }
@@ -301,30 +327,21 @@ void PT_Lookup() {
 	CLOCKS += 50;
 	unsigned int index = ca.PTIndex;
 	if (PTArr[index].v == 1) { // hit
-		// update the L2 cache using LRU:
-		L2LRU(); // sets global to correct LRU L2 cache
-		// if (L2_LRU == 'a')
-		// update TLB:
-		// update appropriate L1cache:
+		ca.fn = PTArr[index].frame;
 		if (TESTFLOW == 1) printf("PT hit\n");
 	}
 	else { // miss
 		PAGEFAULTS++;
-		// buf_access();
 		if (TESTFLOW == 1) printf("Page Fault\n");
-		buf_access();
+		disk_Access();
 	}
 	return;
 }
 
-void disk_access() {
+void disk_Access() {
 	CLOCKS += 5000;
 	DISKACCESSES++;
-	// update BUF
-	// update PT
-	// update L2
-	// update TLB
-	// update L1
+	updatePT();
 	if (TESTFLOW == 1) printf("Disk Accessed\n");
 	return;
 }
@@ -333,32 +350,26 @@ void disk_access() {
 void L2_Access() {
 	// simulate 4-way set associative by searching all 4 L2 Arrays
 	unsigned int index = ca.L2Index;
-	if (L2ArrA[index].frame == ca.fn) { // hit A
-		// update TLB
-		updateTLB();
-		// update L1
+	if (L2ArrA[index].frame == ca.fn && L2ArrA[index].v == 1) { // hit A
+		updateL1();
 		if (TESTFLOW == 1) printf("L2Ahit\n");
 	}
-	else if (L2ArrB[index].frame == ca.fn) { // hit B
-		// update TLB
-		updateTLB();
-		// update L1
+	else if (L2ArrB[index].frame == ca.fn && L2ArrB[index].v == 1) { // hit B
+		updateL1();
 		if (TESTFLOW == 1) printf("L2Bhit\n");
 	}
-	else if (L2ArrC[index].frame == ca.fn) { // hit C
-		// update TLB
-		updateTLB();
-		// update L1
+	else if (L2ArrC[index].frame == ca.fn && L2ArrC[index].v == 1) { // hit C
+		updateL1();
 		if (TESTFLOW == 1) printf("L2Chit\n");
 	}
-	else if (L2ArrD[index].frame == ca.fn) { // hit D
-		// update TLB
-		updateTLB();
-		// update L1
-
+	else if (L2ArrD[index].frame == ca.fn && L2ArrD[index].v == 1) { // hit D
+		updateL1();
 		if (TESTFLOW == 1) printf("L2Dhit\n");
 	}
 	else { // miss entire L2 cache
+		PT_Lookup();
+		updateL2();
+		updateL1();
 		if (TESTFLOW == 1) printf("L2 miss\n");
 	}
 }
@@ -387,18 +398,46 @@ void updateL2() {
 	L2LRU(); // set global to correct LRU L2cache
 	unsigned int index = ca.L2Index;
 	if (L2_LRU == 'a') {
-		L2ArrA[index].frame;
+		L2ArrA[index].frame = ca.fn;
+		L2ArrA[index].v = 1;
 	}
-	//else if (L2_LRU == 'b')
-	//else if (L2_LRU == 'c')
-	//else if (L2_LRU == 'd')
+	else if (L2_LRU == 'b') {
+		L2ArrB[index].frame = ca.fn;
+		L2ArrB[index].v = 1;
+	}
+	else if (L2_LRU == 'c') {
+		L2ArrC[index].frame = ca.fn;
+		L2ArrC[index].v = 1;
+	}
+	else if (L2_LRU == 'd') {
+		L2ArrD[index].frame = ca.fn;
+		L2ArrD[index].v = 1;
+	}
 }
+
 
 void updateTLB() {
 	// accessing TLB costs no clocks
 	TLBArr[TLBPTR].frame = ca.fn;
+	TLBArr[TLBPTR].page = ca.pn;
 	TLBArr[TLBPTR].v = 1;
 	TLBPTR++;
+}
+
+void updatePT() {
+	CLOCKS += 50;
+	if (ca.bufsector == BUFSECTOR) { // buffer hit
+		PTArr[ca.PTIndex].frame = ca.fn;
+		PTArr[ca.PTIndex].v == 1;
+	}
+	else { // buffer miss
+		PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame; // pull in frame from freeTable
+		PTArr[ca.PTIndex].v == 1;
+		ca.fn = FTArr[FREEPTR].frame; // update ca frame with new frame
+		generatePA();
+		BUFSECTOR = ca.bufsector; // update the buffer
+		FREEPTR++;
+	}
 }
 
 #endif
