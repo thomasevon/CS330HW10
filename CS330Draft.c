@@ -9,49 +9,10 @@
 #define LSIZ 128 
 #define RSIZ 8
 
-// constants:
-int L1SIZE = 512;
-int L2SIZE = 1024;
-int PTSIZE = 170000; // actual size should be 2^20, 1048576
-int TLBSIZE = 256;
-int FTSIZE = 170000; // actual size should be 2^24, 16777216
-int BUFSIZE = 16; 
-
-// globals:
-int CLOCKS;				// total process clocks
-int	L1IACCESSES;	 	// total L1I total accesses
-int	L1IHITS;			// total L1I hits
-int L1DACCESSES;		// total L1D total accesses
-int L1DHITS;			// total L1D hits
-int	L2ACCESSES;			// total L2 accesses
-int L2HITS;				// total L2 hits
-int BUFACCESSES;		// total buffer accesses
-int DISKACCESSES;		// total disk accesses
-int TLBACCESSES;		// total TLB accesses
-int TLBHITS;			// total TLB hits
-int	PAGEFAULTS;			// total page faults
-
-		// instantiate structures:
-struct ca ca;			
-struct L1I L1I;
-struct L1D L1D;
-struct L2 L2; 
-struct TLB TLB;
-struct PT PT;
-struct BUF BUF; 
-struct FT FT;
-
+void test();
 
 int main()
 {	
-	// declar arrays:
-	struct L1I L1IArr[L1SIZE]; 
-	struct L1D L1DArr[L1SIZE];
-	struct L2 L2Arr[L2SIZE];
-	struct TLB TLBArr[TLBSIZE];
-	struct PT PTArr[PTSIZE];
-	struct BUF BUFArr[BUFSIZE];
-	struct FT FTArr[FTSIZE];
 
 	// initialize arrays:
 	for (int a = 0; a < L1SIZE; a++) {
@@ -133,8 +94,17 @@ int main()
 		ca.pn = pageNumber; // save pageNumber into struct
 
 		// process everything - simulate memory mapping
+		test();
 
     } 
 
 	return 0;
+}
+
+
+// -----------------------------------------------------------
+// Array manipulation functions:
+
+void test() {
+	TLBArr[0].v = 1; 
 }
