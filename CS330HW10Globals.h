@@ -13,6 +13,8 @@
 #define TLBSIZE 256
 #define FTSIZE 12582912 // 3 * 2^22, 12582912 // this is probably unneccessary
 #define BUFSIZE 16
+#define LSIZ 20 // for txt input array
+#define RSIZ 200000 // for txt input array
 
 // globals:
 int CLOCKS;						// total process clocks

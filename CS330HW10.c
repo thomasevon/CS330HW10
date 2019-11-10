@@ -9,8 +9,6 @@
 #include<ctype.h>
 #include"CS330HW10Functions.h"
 #include"CS330HW10Globals.h"
-#define LSIZ 128
-#define RSIZ 8
 
 int main()
 {
