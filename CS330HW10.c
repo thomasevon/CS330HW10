@@ -58,17 +58,18 @@ int main()
 		ca.L1Index = ca.L1Index & 511; // 511 = 0x1FF mask
 		ca.L2Index = ca.va >> 5; // shift off byte_selctor bits
 		ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
-		ca.TLBIndex = ca.pn & 255; // 255 = 0xFF mask
 		ca.PTIndex = ca.pn & 262143; // 262143 = 0x3FFFF mask
 
 		// process everything - simulate virtual memory
-		if (ca.typeOfAccess == 'I') L1I_Access();
-		else L1D_Access();
-
-		L2LRU();
-		printf("%s %c \n", "L2_LRU = ", L2_LRU);
-
+		if (TESTFLOW == 1) printf("\n%s%d%s \n\n", "current acess[", i, "]");
+		if (ca.typeOfAccess == 'I') {
+			if (TESTFLOW == 1) printf("L1I_Access\n");
+			L1I_Access();
+		}
+		else {
+			if (TESTFLOW == 1) printf("L1D_Access\n");
+			L1D_Access();
+		}
     }
-
 	return 0;
 }

@@ -1,0 +1,80 @@
+Thomas Evon
+CS330 MemMap README.txt
+
+structs:
+
+	ca:		// current access
+
+		char 			type		// type of access, either I, L, or S
+		unsigned int 	va			// virtual address
+		unsigned int	offset
+		unsigned int	pn			// page number
+		unsigned int	fn			// frame number
+		unsigned int	pa 			// physical address
+		unsigned int	L1Index 	// elements[12-4] of ca.va
+		unsigned int	L2Index		// elements[14-5] of ca.va
+		usinged int		TLBIndex	// elements[7-0] of ca.pn
+		usigned int		PTIndex    	// elements[0-17] of ca.pn
+		int 			bytes		// number of bytes accessed
+
+
+	L1 (I and D)
+
+		int				v 			// valid bit
+		int 			d			// dirty bit
+		unsigned int	page		// page number
+
+	L2 (A, B, C, D):
+
+		int				v			// valid bit
+		int 			d			// dirty bit
+		int 			used		// for LRU algorithm
+		unsigned int	frame		// frame number
+
+	TLB:
+
+		int				v 			// valid bit
+		unsigned int	frame		// frame number
+		unsigned int	page		// page number
+
+	PT:
+
+		int				v 			// valid bit
+		int 			d			// dirty bit
+		unsigned int	frame		// frame number
+
+	FT:
+
+		unsigned int 	frame		// frame number
+		int* 			freePtr 	// points to the next free space in the free list
+
+	BUF:
+
+		int 			v 			// valid bit
+		int 			d 			// dirty bit
+		unsigned int	frame		// frame number
+
+
+// constants:
+#define L1SIZE 512
+#define L2SIZE 1024
+#define PTSIZE 262143 // = 2^18, actual size should be 2^20, 1048576
+#define TLBSIZE 256
+#define FTSIZE 262142 // = 2^18 actual size should be 2^24, 16777216
+#define BUFSIZE 16
+
+// globals:
+int CLOCKS;				// total process clocks
+int	L1IACCESSES;	 	// total L1I total accesses
+int	L1IHITS;			// total L1I hits
+int L1DACCESSES;		// total L1D total accesses
+int L1DHITS;			// total L1D hits
+int	L2ACCESSES;			// total L2 accesses
+int L2HITS;				// total L2 hits
+int BUFACCESSES;		// total buffer accesses
+int DISKACCESSES;		// total disk accesses
+int TLBACCESSES;		// total TLB accesses
+int TLBHITS;			// total TLB hits
+int	PAGEFAULTS;			// total page faults
+char L2_LRU;			// least-recently used tracker for L2 cache
+								// a = L2A, b = L2B, c = L2C, d = L2D
