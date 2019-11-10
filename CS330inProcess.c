@@ -9,16 +9,11 @@
 #define LSIZ 128 
 #define RSIZ 8
 
-// constants:
-int L1SIZE = 512;
-int L2SIZE = 1024;
-int PTSIZE = 170000; // actual size should be 2^20, 1048576
-int TLBSIZE = 256;
-int FTSIZE = 170000; // actual size should be 2^24, 16777216
-int BUFSIZE = 16; 
+void test();
 
 int main()
 {	
+
 	// declar arrays:
 	struct L1I L1IArr[L1SIZE]; 
 	struct L1D L1DArr[L1SIZE];
@@ -27,6 +22,7 @@ int main()
 	struct PT PTArr[PTSIZE];
 	struct BUF BUFArr[BUFSIZE];
 	struct FT FTArr[FTSIZE];
+
 
 	// initialize arrays:
 	for (int a = 0; a < L1SIZE; a++) {
@@ -108,8 +104,17 @@ int main()
 		ca.pn = pageNumber; // save pageNumber into struct
 
 		// process everything - simulate memory mapping
+		test();
 
     } 
 
 	return 0;
+}
+
+
+// -----------------------------------------------------------
+// Array manipulation functions:
+
+void test() {
+	TLBArr[0].v = 1; 
 }

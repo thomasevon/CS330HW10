@@ -6,6 +6,14 @@
 #ifndef CS330HW10GLOBALS_H
 #define CS330HW10GLOBALS_H
 
+// constants:
+int L1SIZE = 512;
+int L2SIZE = 1024;
+int PTSIZE = 170000; // actual size should be 2^20, 1048576
+int TLBSIZE = 256;
+int FTSIZE = 170000; // actual size should be 2^24, 16777216
+int BUFSIZE = 16; 
+
 // globals:
 int CLOCKS;				// total process clocks
 int	L1IACCESSES;	 	// total L1I total accesses

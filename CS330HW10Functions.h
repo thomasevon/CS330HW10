@@ -1,37 +1,10 @@
 // Thomas Evon
 // CS 330
 // CS330HW10Functions.h
-// header file that contains all functions used for CS330HW10.c
+// header file that contains all of the utility functions used for CS330HW10.c
 
 #ifndef CS330HW10GFUNCTIONS_H
 #define CS330HW10GFUNCTIONS_H
-
-#include"CS330HW10Globals.h"
-
-//------------------------------------------------------------------------
-// Accessor Functions:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //------------------------------------------------------------------------
 // Utility Functions:
