@@ -9,9 +9,9 @@
 // constants:
 #define L1SIZE 512
 #define L2SIZE 1024
-#define PTSIZE 170000 // actual size should be 2^20, 1048576
+#define PTSIZE 262143 // = 2^18, actual size should be 2^20, 1048576
 #define TLBSIZE 256
-#define FTSIZE 170000 // actual size should be 2^24, 16777216
+#define FTSIZE 262142 // = 2^18 actual size should be 2^24, 16777216
 #define BUFSIZE 16
 
 // globals:
@@ -27,11 +27,13 @@ int DISKACCESSES;		// total disk accesses
 int TLBACCESSES;		// total TLB accesses
 int TLBHITS;			// total TLB hits
 int	PAGEFAULTS;			// total page faults
+char L2_LRU;			// least-recently used tracker for L2 cache
+						// a = L2A, b = L2B, c = L2C, d = L2D
 
 // structs:
 struct ca {
 	char typeOfAccess;
-	unsigned int va, pn, fn, offset, pa, L1Index, L2Index;
+	unsigned int va, pn, fn, offset, pa, L1Index, L2Index, TLBIndex, PTIndex;
 	int bytes;
 }; // currentAccess struct
 
@@ -49,7 +51,7 @@ struct L1D {
 
 
 struct L2 {
-	int v, d;
+	int v, d, used;
 	unsigned int frame;
 };
 
@@ -86,7 +88,10 @@ struct FT FT;
 // declar arrays:
 struct L1I L1IArr[L1SIZE];
 struct L1D L1DArr[L1SIZE];
-struct L2 L2Arr[L2SIZE];
+struct L2 L2ArrA[L2SIZE];
+struct L2 L2ArrB[L2SIZE];
+struct L2 L2ArrC[L2SIZE];
+struct L2 L2ArrD[L2SIZE];
 struct TLB TLBArr[TLBSIZE];
 struct PT PTArr[PTSIZE];
 struct BUF BUFArr[BUFSIZE];
