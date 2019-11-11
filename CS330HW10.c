@@ -1,6 +1,6 @@
 // Thomas Evon
 // CS 330
-// main file
+// main file // 
 
 #include<string.h>
 #include<stdio.h>

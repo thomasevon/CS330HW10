@@ -1,7 +1,7 @@
 // Thomas Evon
 // CS 330
 // CS330HW10Globals.h
-// header file that contains all globals used for CS330HW10.c
+// header file that contains all globals used for CS330HW10.c //
 
 #ifndef CS330HW10GLOBALS_H
 #define CS330HW10GLOBALS_H

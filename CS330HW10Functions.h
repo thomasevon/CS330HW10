@@ -279,7 +279,7 @@ void L1I_Access() {
 	L1IACCESSES++;
 	unsigned int index = ca.L1Index; // ca.va[12-4]
 	if (L1IArr[index].page == ca.pn && L1IArr[index].v == 1) { // hit
-		L1IHITS  += 4;
+		L1IHITS += 1;
 		L1IArr[index].d = 1; // set dirty
 		if (TESTFLOW == 1) printf("L1Ihit\n");
 	}
@@ -332,7 +332,7 @@ void TLB_Access() {
 		updateTLB();
 		generatePA(); // store pa and L2Index into ca struct
 		L2_Access();
-		if (TESTFLOW == 1) printf("TLB miss\n");
+		if (TESTFLOW == 1) printf("TLB updated\n");
 	}
 	return;
 }
@@ -352,8 +352,11 @@ void PT_Lookup() {
 	return;
 }
 
+
 void disk_Access() {
 	CLOCKS += 5000;
+	printf("%s%u\n", "ca.buffer: ", ca.bufsector);
+	printf("%s%u\n", "BUFSECTOR: ", BUFSECTOR);
 	if (ca.bufsector == BUFSECTOR) { // buffer hit
 		BUFACCESSES++;
 		PTArr[ca.PTIndex].frame = ca.fn;
@@ -394,6 +397,7 @@ void L2_Access() {
 	}
 	else { // miss entire L2 cache
 		PT_Lookup();
+		updateTLB();
 		updateL2();
 		updateL1();
 		if (TESTFLOW == 1) printf("L2 miss\n");
@@ -447,9 +451,9 @@ void updateTLB() {
 	TLBArr[TLBPTR].frame = ca.fn;
 	TLBArr[TLBPTR].page = ca.pn;
 	TLBArr[TLBPTR].v = 1;
-	printf("we made it this far\n");
 	TLBPTR++;
 }
+
 
 void updatePT() {
 	CLOCKS += 50;
