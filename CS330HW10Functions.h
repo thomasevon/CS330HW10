@@ -64,10 +64,10 @@ void generateReport() {
 	printf("%s\n", "---------------------------------------------------------");
 }
 
-// generate ca.pa, ca.L2Index, and ca.buffsector
+// generate ca.pa, ca.L2Index
 void generatePA() {
 	// pre: ca must have a fn loaded in
-	// post: ca.pa, ca.L2Index, and ca.buffsector are created
+	// post: ca.pa, ca.L2Index are created
 	// generate pa
 	unsigned int loader = ca.fn << 12; // shift fn left to prep for OR
 	ca.pa = loader | ca.offset; // pa is generated
@@ -76,7 +76,9 @@ void generatePA() {
 	ca.L2Index = ca.pa >> 5; // shift off byte_selctor bits
 	ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
 
+	// create bufsector
 	ca.bufsector = ca.pa >> 16;
+	ca.bufsector = ca.bufsector & 65535; // mask by 0xFFFF to keep rightmost 16 bits
 }
 
 
@@ -84,8 +86,7 @@ void generatePA() {
 void displayArray(int count) {
 	for (int r = 0; r < count; r++){
 		// printf("%s %u \n", "page: ", BUFArr[r].page);
-		printf("%s %d \n", "v: ", BUFArr[r].v);
-		printf("%s %d \n", "d: ", BUFArr[r].d);
+		printf("%s %d \n", "frame: ", FTArr[r].frame);
 	}
 }
 
@@ -168,7 +169,7 @@ void init_arrays() {
 		PTArr[e].frame = 0;
 	}
 
-	unsigned int runner = FREEPTR;
+	unsigned int runner = 262144;
 	for (int f = 0; f < FTSIZE; f++) {
 		FTArr[f].frame = runner;
 		runner++; // shift to next available frame
@@ -355,18 +356,14 @@ void PT_Lookup() {
 
 void disk_Access() {
 	CLOCKS += 5000;
-	printf("%s%u\n", "ca.buffer: ", ca.bufsector);
-	printf("%s%u\n", "BUFSECTOR: ", BUFSECTOR);
-	if (ca.bufsector == BUFSECTOR) { // buffer hit
-		BUFACCESSES++;
+		DISKACCESSES++;
+		// update page table:
 		PTArr[ca.PTIndex].frame = ca.fn;
 		PTArr[ca.PTIndex].v == 1;
-	}
-	else {
-		DISKACCESSES++;
-		updatePT();
+		generatePA();
+		BUFSECTOR = ca.bufsector;
 		if (TESTFLOW == 1) printf("Disk Accessed\n");
-	}
+
 	return;
 }
 
@@ -457,7 +454,7 @@ void updateTLB() {
 
 void updatePT() {
 	CLOCKS += 50;
-	PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame; // pull in frame from freeTable
+	PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame >> 12; // pull in frame from freeTable
 	PTArr[ca.PTIndex].v == 1;
 	ca.fn = FTArr[FREEPTR].frame; // update ca frame with new frame
 	generatePA();
