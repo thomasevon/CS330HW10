@@ -30,10 +30,10 @@ int TLBACCESSES;				// total TLB accesses
 int TLBHITS;					// total TLB hits
 int	PAGEFAULTS;					// total page faults
 char L2_LRU;					// least-recently used tracker for L2 cache
-int TESTFLOW = 1;  				// gauge to turn on printf statements
+int TESTFLOW = 0;  				// gauge to turn on printf statements
 int TLBPTR = 0;					// pointer to the next free entry in TLB array
 unsigned int FREEPTR = 262144;  // first free entry contains this frame number
-unsigned int BUFSECTOR; 		// buffer sector
+unsigned int BUFSECTOR = 0; 	// buffer sector
 
 
 // structs:

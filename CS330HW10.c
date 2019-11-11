@@ -10,6 +10,10 @@
 #include"CS330HW10Functions.h"
 #include"CS330HW10Globals.h"
 
+// ERROR report: printing L1I Hit rate is messed up
+// updating the TLB is messed up
+// total clocks is messed up
+
 int main()
 {
 

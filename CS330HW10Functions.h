@@ -58,6 +58,8 @@ void generateReport() {
 	double L2HitRate = (double)L2hits / (double)L2accesses;
 	printf("%s%f\n", "8. L2 hit rate: ", L2HitRate);
 
+	printf("%s%d\n", "9. Last TLB pointter: ", TLBPTR);
+
 	printf("\n");
 	printf("%s\n", "---------------------------------------------------------");
 }
@@ -296,11 +298,11 @@ void L1D_Access() {
 	if (L1DArr[index].page == ca.pn && L1DArr[index].v == 1) {// hit
 		L1DHITS += 1;
 		L1DArr[index].d = 1; // set dirty
-		printf("L1D hit\n");
+		if (TESTFLOW == 1) printf("L1Dhit\n");
 	}
 	else { // miss
 		TLB_Access();
-		printf("L1D miss\n");
+		if (TESTFLOW == 1) printf("L1D miss\n");
 	}
 	return;
 }
@@ -445,6 +447,7 @@ void updateTLB() {
 	TLBArr[TLBPTR].frame = ca.fn;
 	TLBArr[TLBPTR].page = ca.pn;
 	TLBArr[TLBPTR].v = 1;
+	printf("we made it this far\n");
 	TLBPTR++;
 }
 
