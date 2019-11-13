@@ -35,31 +35,30 @@ void generateReport() {
 	printf("%s\n\n", "This is the report for the addstream.txt process: ");
 	printf("%s%d\n", "1. Total Clocks Required: ", CLOCKS);
 	printf("%s%d\n", "2. Total Page Faults: ", PAGEFAULTS);
-	printf("%s%d\n", "3. Total disk accesses: ", DISKACCESSES);
-	printf("%s%d\n", "4. Total buffer accesses: ", BUFHITS);
+	printf("%s%d\n", "3. Total buffer hits: ", BUFHITS);
 
 	int L1Ihits = L1IHITS;
 	int L1Iaccesses = L1IACCESSES;
 	double L1IHitRate = (double)L1Ihits / (double)L1Iaccesses;
-	printf("%s%f\n", "5. L1I hit rate: ", L1IHitRate);
+	printf("%s%f\n", "4. L1I hit rate: ", L1IHitRate);
 
 	int L1Dhits = L1DHITS;
 	int L1Daccesses = L1DACCESSES;
 	double L1DHitRate = (double)L1Dhits / (double)L1Daccesses;
-	printf("%s%f\n", "6. L1D hit rate: ", L1DHitRate);
+	printf("%s%f\n", "5. L1D hit rate: ", L1DHitRate);
 
 	int TLBhits = TLBHITS;
-	printf("%s%d\n", "TLBhits in generate: ", TLBHITS);
 	int TLBaccesses = TLBACCESSES;
 	double TLBHitRate = (double)TLBhits / (double)TLBaccesses;
-	printf("%s%f\n", "7. TLB hit rate: ", TLBHitRate);
+	printf("%s%f\n", "6. TLB hit rate: ", L1DHitRate);
 
 	int L2hits = L2HITS;
 	int L2accesses = L2ACCESSES;
 	double L2HitRate = (double)L2hits / (double)L2accesses;
-	printf("%s%f\n", "8. L2 hit rate: ", L2HitRate);
+	printf("%s%f\n", "7. L2 hit rate: ", L2HitRate);
 
-	printf("%s%d\n", "9. Last TLB pointter: ", TLBPTR);
+	printf("%s%d\n", "8. Last TLB pointer: ", TLBPTR);
+	printf("%s0x%x\n", "9. Last Frame Allocated: ", FREEPTR - 1);
 
 	printf("\n");
 	printf("%s\n", "---------------------------------------------------------");
@@ -78,18 +77,19 @@ void generatePA() {
 	ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
 
 	// create bufsector
-	ca.bufsector = ca.pa >> 4;
+	ca.bufsector = ca.pa >> 14;
 	//ca.bufsector = ca.bufsector & 65535; // mask by 0xFFFF to keep rightmost 16 bits
 }
 
 
-// displays array
+// displays array for testing
 void displayArray(int count) {
 	for (int r = 0; r < count; r++) {
 		printf("%s %u \n", "TLB.v ", TLBArr[r].page);
 		//printf("%s %d\n", ", valid: ", TLBArr[r].v);
 	}
 }
+
 
 // discovers the least-recently used L2 cache
 void L2LRU() {
@@ -102,7 +102,7 @@ void L2LRU() {
 	int min;
 	int i = 0;
 	int j = i + 1;
-	for (i; i < 3; i++) {
+	for (i; i < 3; i++) { // sort for which L2 has the most recent uses
 		if (sort[i] < sort[j])
 			min = sort[i];
 		else min = sort[j];
@@ -112,7 +112,7 @@ void L2LRU() {
 		if (sort[j] < min)
 			min = sort[j];
 	}
-
+	// set correct global L2_LRU global flag:
 	if (min == L2ArrA[0].used) L2_LRU = 'a';
 	else if (min == L2ArrB[0].used) L2_LRU = 'b';
 	else if (min == L2ArrC[0].used) L2_LRU = 'c';
@@ -221,7 +221,6 @@ char* scrubFileLine(char* str) {
           		str[j++] = str[i]; // remove comma
 
 	str[j] = '\0';
-
 	return str;
 }
 
@@ -267,7 +266,6 @@ void displayBinary(unsigned int n)
     // printing binary array in reverse order
     for (int j = 31; j >= 0; j--)
         printf("%d", binaryNum[j]);
-
 	printf("\n");
 }
 
@@ -311,21 +309,19 @@ void L1D_Access() {
 
 void TLB_Access() {
 	// TLB doesn't cost any clocks
-	//printf("%s%u\n", "1. ca.pn into TLBAccess: ", ca.pn);
 	TLBACCESSES++;
 	int hitIndex = 0;
 	int hit = 0; // flag to indicate if there is a hit
 	for (int index = 0; index < TLBSIZE; index++) { // linear search of TLB
-		if (TLBArr[index].page == ca.pn && TLBArr[index].v == 1) { // hit
+		if (TLBArr[index].page == ca.pn && TLBArr[index].v == 1) { // flag as hit
 			hit = 1;
-			TLBHITS++;
-			printf("%s%d\n", "TLBhits internal: ", TLBHITS);
 			hitIndex = index;
 			break;
 		}
 	}
 
 	if (hit == 1) { // TLB hits
+		TLBHITS++;
 		if (TESTFLOW == 1) printf("TLB hit\n");
 		// generate pa and fn and store into ca:
 		ca.fn = TLBArr[hitIndex].frame; // store frame into ca from TLB
@@ -333,7 +329,7 @@ void TLB_Access() {
 		L2_Access();
 	}
 	else if (hit == 0) { // miss
-		printf("TLB Mised\n");
+		if (TESTFLOW == 1) printf("TLB Mised\n");
 		PT_Lookup(); // access Page Table, will give pack fn
 		generatePA();
 		updateTLB();
@@ -353,25 +349,21 @@ void L2_Access() {
 		L2HITS++;
 		if (TESTFLOW == 1) printf("L2Ahit\n");
 		updateL1();
-		//updateTLB();
 	}
 	else if (L2ArrB[index].frame == ca.fn && L2ArrB[index].v == 1) { // hit B
 		L2HITS++;
 		if (TESTFLOW == 1) printf("L2Bhit\n");
 		updateL1();
-		//updateTLB()
 	}
 	else if (L2ArrC[index].frame == ca.fn && L2ArrC[index].v == 1) { // hit C
 		L2HITS++;
 		if (TESTFLOW == 1) printf("L2Chit\n");
 		updateL1();
-		//updateTLB();
 	}
 	else if (L2ArrD[index].frame == ca.fn && L2ArrD[index].v == 1) { // hit D
 		L2HITS++;
 		if (TESTFLOW == 1) printf("L2Dhit\n");
 		updateL1();
-		//updateTLB();
 	}
 	else { // miss entire L2 cache
 		CLOCKS += 50; // "access" main mem and increment clock
@@ -384,7 +376,6 @@ void L2_Access() {
 
 // update appropriate L1cache:
 void updateL1() {
-	CLOCKS += 4; // updating L1 costs clocks
 	if (ca.typeOfAccess == 'I') {  // update L1I cache
 		L1IArr[ca.L1Index].page = ca.pn;
 		L1IArr[ca.L1Index].v = 1;
@@ -399,19 +390,18 @@ void updateL1() {
 }
 
 
-void disk_Access() { // sector = pa >> 4;
+void disk_Access() {
 	if (TESTFLOW == 1) printf("Disk Accessed\n");
-	if (ca.bufsector == BUFSECTOR) { // buffer miss
+	if (ca.bufsector == BUFSECTOR) { // buffer hit
 		BUFHITS++;
 		CLOCKS += 200;
 		updatePT();
 	}
-	else {
+	else { // miss the buffer
 	DISKACCESSES++;
-	CLOCKS +=  5000;
+	CLOCKS += 5000;
 	updatePT();
-	printf("%s%u\n", "ca.bufsector to be loaded in: ", ca.bufsector);
-	BUFSECTOR = ca.bufsector;
+	BUFSECTOR = ca.bufsector; // buffer now holds the last frame written back
 	}
 	return;
 }
@@ -437,8 +427,9 @@ void PT_Lookup() {
 void updateL2() {
 	if (TESTFLOW == 1) printf("updatingL2...\n");
 	CLOCKS += 12;
-	L2LRU(); // set global to correct LRU L2cache
+	L2LRU(); // function will set global L2_LRU to the correct value
 	unsigned int index = ca.L2Index;
+	// check for which L2 to update:
 	if (L2_LRU == 'a') {
 		L2ArrA[index].frame = ca.fn;
 		L2ArrA[index].v = 1;
@@ -459,27 +450,21 @@ void updateL2() {
 		L2ArrD[index].v = 1;
 		L2ArrD[0].used++;
 	}
-	//printf("%s%u\n", "after update, L2A.frame: ", L2ArrA[index].frame);
-	//printf("%s%u\n", "after update, L2B.frame: ", L2ArrB[index].frame);
-	//printf("%s%u\n", "after update, L2C.frame: ", L2ArrC[index].frame);
-	//printf("%s%u\n", "after update, L2D.frame: ", L2ArrD[index].frame);
 }
 
 
 void updateTLB() {
 	// accessing TLB costs no clocks
-	if (TLBPTR == TLBSIZE) {
+	if (TLBPTR == TLBSIZE) { // if at max entry, start over
 		TLBPTR = 0;
-		FIFO++;
-	}// implement FIFO
+	} // implement FIFO
 
-	for (int i = 0; i < TLBHITS; i++) { // if already in table, don't update
-		if (TLBArr[i].page == ca.pn) {
-			printf("Thrash!\n");
+	for (int i = 0; i < TLBSIZE; i++) { // if already in table, don't update
+		if (TLBArr[i].page == ca.pn) { // check if TLB is already up to date
 			return;
 		}
 	}
-
+	// update the TLB:
 	TLBArr[TLBPTR].frame = ca.fn;
 	TLBArr[TLBPTR].page = ca.pn;
 	TLBArr[TLBPTR].v = 1;
@@ -487,8 +472,7 @@ void updateTLB() {
 }
 
 
-void updatePT() { // crux of the problem: how to udpate ca.fn when disk acess
-	printf("updatingTLB\n");
+void updatePT() {
 	CLOCKS += 50;
 	unsigned int newFrame = FREEPTR; // new frame is the next in free list
 	PTArr[ca.pn].frame = newFrame; // pull in frame from freeTable

@@ -10,23 +10,17 @@
 #include"CS330HW10Functions.h"
 #include"CS330HW10Globals.h"
 
-// ERROR report: printing L1I Hit rate is messed up
-// updating the TLB is messed up
-// total clocks is messed up
-
-int main()
-{
+int main() {
 
 	init_arrays(); // initialize all arrays
 
-	// read in file
+	// read in file, store in 2d array
 	char line[RSIZ][LSIZ];
 	char fname[20] = "addstream.txt";
 	char* processStr;
     FILE *fptr = NULL;
 	int i = 0;
 	int tot = 0;
-
 
     fptr = fopen(fname, "r");
     while(fgets(line[i], LSIZ, fptr)) {
@@ -48,7 +42,7 @@ int main()
 		int bytesAccessed = convertToInt(convertBytesA);
 		ca.bytes= bytesAccessed; // store bytes accessed into struct
 		char hexStr[8];
-		strncpy(hexStr, processStr+1, 8); // isolate the hex value
+		strncpy(hexStr, processStr + 1, 8); // isolate the hex value
 		hexStr[8] = '\0';
 		unsigned int convertedHex = convert(hexStr); // convert hex->unsignedint
 		ca.va = convertedHex; // store hex into struct
@@ -58,10 +52,9 @@ int main()
 		ca.pn = pageNumber; // save pageNumber into struct
 		ca.L1Index = ca.va >> 4; // shift off byte_selctor bits
 		ca.L1Index = ca.L1Index & 511; // 511 = 0x1FF mask
+		// pre-process complete
 
-		// process everything - simulate virtual memory
-		// printf("%s%d\n\n", "Current Cycle: ", i);
-		// printf("\n%s%d%s \n\n", "current acess[", i, "]");
+		// run through process:
 		if (ca.typeOfAccess == 'I') {
 			// if (TESTFLOW == 1) printf("L1I_Access\n");
 			L1I_Access();
@@ -71,16 +64,6 @@ int main()
 			L1D_Access();
 		}
     }
-	//displayArray(1024);
 	generateReport(); // print out final report and exit
-	printf("%s%d\n", "Total Runs: ", tot);
-	printf("%s%d\n", "L2AISFULL: ", L2AISFULL);
-	printf("%s%d\n", "L2BISFULL: ", L2BISFULL);
-	printf("%s%d\n", "L2CISFULL: ", L2CISFULL);
-	printf("%s%d\n", "L2DISFULL: ", L2DISFULL);
-	printf("%s%d\n", "L2ArrAUsed: ", L2ArrA[0].used);
-	printf("%s%d\n", "L2ArrAUsed: ", L2ArrB[0].used);
-	printf("%s%d\n", "L2ArrAUsed: ", L2ArrC[0].used);
-	printf("%s%d\n", "L2ArrAUsed: ", L2ArrD[0].used);
 	return 0;
 }

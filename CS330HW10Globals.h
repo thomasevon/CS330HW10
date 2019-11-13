@@ -9,12 +9,12 @@
 // constants:
 #define L1SIZE 512
 #define L2SIZE 1024
-#define PTSIZE 1048576 // 2^20, 1048576
+#define PTSIZE 1048576			 // 2^20, 1048576
 #define TLBSIZE 256
-#define FTSIZE 12582912 // 3 * 2^22, 12582912 // this is probably unneccessary
+#define FTSIZE 12582912 		// 3 * 2^22, 12582912 // this is probably unneccessary
 #define BUFSIZE 16
-#define LSIZ 20 // for txt input array
-#define RSIZ 200000 // for txt input array
+#define LSIZ 20 				// for txt input array
+#define RSIZ 200000			 	// for txt input array
 
 // globals:
 int CLOCKS;						// total process clocks
@@ -30,15 +30,10 @@ int TLBACCESSES;				// total TLB accesses
 int TLBHITS;					// total TLB hits
 int	PAGEFAULTS;					// total page faults
 char L2_LRU;					// least-recently used tracker for L2 cache
-int L2AISFULL = 0;
-int L2BISFULL = 0;
-int L2CISFULL = 0;
-int L2DISFULL = 0;
 int TESTFLOW = 0;  				// gauge to turn on printf statements
 int TLBPTR = 0;					// pointer to the next free entry in TLB array
-unsigned int FREEPTR = 1048576;  // first free entry contains 0x40000 = 1048576
-unsigned int BUFSECTOR = 1; 	// buffer sector
-int FIFO = 0;
+unsigned int FREEPTR = 1024;    // first free entry contains 0x00400 = 1024
+unsigned int BUFSECTOR = 0; 	// buffer sector
 
 
 // structs:
@@ -90,7 +85,7 @@ struct TLB TLB;
 struct PT PT;
 struct BUF BUF;
 
-// declar arrays:
+// declare arrays:
 struct L1I L1IArr[L1SIZE];
 struct L1D L1DArr[L1SIZE];
 struct L2 L2ArrA[L2SIZE];
