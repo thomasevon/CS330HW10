@@ -30,16 +30,21 @@ int TLBACCESSES;				// total TLB accesses
 int TLBHITS;					// total TLB hits
 int	PAGEFAULTS;					// total page faults
 char L2_LRU;					// least-recently used tracker for L2 cache
+int L2AISFULL = 0;
+int L2BISFULL = 0;
+int L2CISFULL = 0;
+int L2DISFULL = 0;
 int TESTFLOW = 0;  				// gauge to turn on printf statements
 int TLBPTR = 0;					// pointer to the next free entry in TLB array
-unsigned int FREEPTR = 262144;  // first free entry contains this frame number
-unsigned int BUFSECTOR = 0; 	// buffer sector
+unsigned int FREEPTR = 1048576;  // first free entry contains 0x40000 = 1048576
+unsigned int BUFSECTOR = 1; 	// buffer sector
+int FIFO = 0;
 
 
 // structs:
 struct ca {
 	char typeOfAccess;
-	unsigned int va, pn, fn, offset, pa, L1Index, L2Index, PTIndex, bufsector;
+	unsigned int va, pn, fn, offset, pa, L1Index, L2Index, bufsector;
 	int bytes;
 }; // currentAccess struct
 
@@ -64,11 +69,6 @@ struct L2 {
 struct TLB {
 	int v;
 	unsigned int frame, page;
-};
-
-struct FT {
-	unsigned int frame;
-	int* freePtr;
 };
 
 struct BUF {

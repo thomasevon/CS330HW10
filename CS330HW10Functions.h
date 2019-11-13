@@ -49,6 +49,7 @@ void generateReport() {
 	printf("%s%f\n", "6. L1D hit rate: ", L1DHitRate);
 
 	int TLBhits = TLBHITS;
+	printf("%s%d\n", "TLBhits in generate: ", TLBHITS);
 	int TLBaccesses = TLBACCESSES;
 	double TLBHitRate = (double)TLBhits / (double)TLBaccesses;
 	printf("%s%f\n", "7. TLB hit rate: ", TLBHitRate);
@@ -68,7 +69,7 @@ void generateReport() {
 void generatePA() {
 	// pre: ca must have a fn loaded in
 	// post: ca.pa, ca.L2Index are created
-	// generate pa
+
 	unsigned int loader = ca.fn << 12; // shift fn left to prep for OR
 	ca.pa = loader | ca.offset; // pa is generated
 
@@ -77,16 +78,16 @@ void generatePA() {
 	ca.L2Index = ca.L2Index & 1023; // 1023 = 0x3FF mask
 
 	// create bufsector
-	ca.bufsector = ca.pa >> 16;
-	ca.bufsector = ca.bufsector & 65535; // mask by 0xFFFF to keep rightmost 16 bits
+	ca.bufsector = ca.pa >> 4;
+	//ca.bufsector = ca.bufsector & 65535; // mask by 0xFFFF to keep rightmost 16 bits
 }
 
 
 // displays array
 void displayArray(int count) {
-	for (int r = 0; r < count; r++){
-		// printf("%s %u \n", "page: ", BUFArr[r].page);
-		printf("%s %d \n", "frame: ", FTArr[r].frame);
+	for (int r = 0; r < count; r++) {
+		printf("%s %u \n", "TLB.v ", TLBArr[r].page);
+		//printf("%s %d\n", ", valid: ", TLBArr[r].v);
 	}
 }
 
@@ -98,19 +99,24 @@ void L2LRU() {
 	sort[2] = L2ArrC[0].used;
 	sort[3] = L2ArrD[0].used;
 
-	int max;
+	int min;
 	int i = 0;
 	int j = i + 1;
 	for (i; i < 3; i++) {
-		if (sort[i] > sort[j])
-			max = sort[i];
-		else max = sort[j];
+		if (sort[i] < sort[j])
+			min = sort[i];
+		else min = sort[j];
 		j++;
 	}
-	if (max == L2ArrA[0].used) L2_LRU = 'a';
-	else if (max == L2ArrB[0].used) L2_LRU = 'b';
-	else if (max == L2ArrC[0].used) L2_LRU = 'c';
-	else if (max == L2ArrD[0].used) L2_LRU = 'd';
+	for (int j = 0; j < 3; j++) {
+		if (sort[j] < min)
+			min = sort[j];
+	}
+
+	if (min == L2ArrA[0].used) L2_LRU = 'a';
+	else if (min == L2ArrB[0].used) L2_LRU = 'b';
+	else if (min == L2ArrC[0].used) L2_LRU = 'c';
+	else if (min == L2ArrD[0].used) L2_LRU = 'd';
 }
 
 
@@ -169,7 +175,7 @@ void init_arrays() {
 		PTArr[e].frame = 0;
 	}
 
-	unsigned int runner = 262144;
+	unsigned int runner = 262144; // free list begins at 262144 = 0x40000
 	for (int f = 0; f < FTSIZE; f++) {
 		FTArr[f].frame = runner;
 		runner++; // shift to next available frame
@@ -285,8 +291,8 @@ void L1I_Access() {
 		if (TESTFLOW == 1) printf("L1Ihit\n");
 	}
 	else { // miss
-		TLB_Access();
 		if (TESTFLOW == 1) printf("L1I miss\n");
+		TLB_Access();
 	}
 	return;
 }
@@ -302,8 +308,8 @@ void L1D_Access() {
 		if (TESTFLOW == 1) printf("L1Dhit\n");
 	}
 	else { // miss
-		TLB_Access();
 		if (TESTFLOW == 1) printf("L1D miss\n");
+		TLB_Access();
 	}
 	return;
 }
@@ -311,59 +317,35 @@ void L1D_Access() {
 
 void TLB_Access() {
 	// TLB doesn't cost any clocks
+	//printf("%s%u\n", "1. ca.pn into TLBAccess: ", ca.pn);
 	TLBACCESSES++;
-	int hitIndex;
+	int hitIndex = 0;
 	int hit = 0; // flag to indicate if there is a hit
-	for (int index = 0; index <TLBSIZE; index++) { // linear search of TLB
-		if (TLBArr[index].page = ca.pn && TLBArr[index].v == 1) // hit
+	for (int index = 0; index < TLBSIZE; index++) { // linear search of TLB
+		if (TLBArr[index].page == ca.pn && TLBArr[index].v == 1) { // hit
 			hit = 1;
+			TLBHITS++;
+			printf("%s%d\n", "TLBhits internal: ", TLBHITS);
 			hitIndex = index;
+			break;
+		}
 	}
 
-	if (hit == 1) {
-		TLBHITS++;
+	if (hit == 1) { // TLB hits
+		if (TESTFLOW == 1) printf("TLB hit\n");
 		// generate pa and fn and store into ca:
 		ca.fn = TLBArr[hitIndex].frame; // store frame into ca from TLB
 		generatePA(); // store pa and L2Index into ca struct
-		L2_Access(); // access L2
-		if (TESTFLOW == 1) printf("TLB hit\n");
+		L2_Access();
 	}
 	else if (hit == 0) { // miss
+		printf("TLB Mised\n");
 		PT_Lookup(); // access Page Table, will give pack fn
-		updateTLB();
-		generatePA(); // store pa and L2Index into ca struct
-		L2_Access();
-		if (TESTFLOW == 1) printf("TLB updated\n");
-	}
-	return;
-}
-
-void PT_Lookup() {
-	CLOCKS += 50;
-	unsigned int index = ca.PTIndex;
-	if (PTArr[index].v == 1) { // hit
-		ca.fn = PTArr[index].frame;
-		if (TESTFLOW == 1) printf("PT hit\n");
-	}
-	else { // miss
-		PAGEFAULTS++;
-		if (TESTFLOW == 1) printf("Page Fault\n");
-		disk_Access();
-	}
-	return;
-}
-
-
-void disk_Access() {
-	CLOCKS += 5000;
-		DISKACCESSES++;
-		// update page table:
-		PTArr[ca.PTIndex].frame = ca.fn;
-		PTArr[ca.PTIndex].v == 1;
 		generatePA();
-		BUFSECTOR = ca.bufsector;
-		if (TESTFLOW == 1) printf("Disk Accessed\n");
-
+		updateTLB();
+		if (TESTFLOW == 1) printf("TLB updated\n");
+		L2_Access();
+	}
 	return;
 }
 
@@ -372,32 +354,36 @@ void L2_Access() {
 	L2ACCESSES++;
 	// simulate 4-way set associative by searching all 4 L2 Arrays
 	unsigned int index = ca.L2Index;
+
 	if (L2ArrA[index].frame == ca.fn && L2ArrA[index].v == 1) { // hit A
 		L2HITS++;
-		updateL1();
 		if (TESTFLOW == 1) printf("L2Ahit\n");
+		updateL1();
+		//updateTLB();
 	}
 	else if (L2ArrB[index].frame == ca.fn && L2ArrB[index].v == 1) { // hit B
 		L2HITS++;
-		updateL1();
 		if (TESTFLOW == 1) printf("L2Bhit\n");
+		updateL1();
+		//updateTLB()
 	}
 	else if (L2ArrC[index].frame == ca.fn && L2ArrC[index].v == 1) { // hit C
 		L2HITS++;
-		updateL1();
 		if (TESTFLOW == 1) printf("L2Chit\n");
+		updateL1();
+		//updateTLB();
 	}
 	else if (L2ArrD[index].frame == ca.fn && L2ArrD[index].v == 1) { // hit D
 		L2HITS++;
-		updateL1();
 		if (TESTFLOW == 1) printf("L2Dhit\n");
+		updateL1();
+		//updateTLB();
 	}
 	else { // miss entire L2 cache
-		PT_Lookup();
-		updateTLB();
+		CLOCKS += 50; // "access" main mem and increment clock
+		if (TESTFLOW == 1) printf("L2 miss\n");
 		updateL2();
 		updateL1();
-		if (TESTFLOW == 1) printf("L2 miss\n");
 	}
 }
 
@@ -419,32 +405,80 @@ void updateL1() {
 }
 
 
+void disk_Access() { // sector = pa >> 4;
+	 // buffer miss
+	 if (TESTFLOW == 1) printf("Disk Accessed\n");
+	DISKACCESSES++;
+	CLOCKS +=  5000;
+		// update page table:
+	updatePT();
+	return;
+}
+
+
+void PT_Lookup() {
+	CLOCKS += 50;
+	unsigned int index = ca.pn;
+	if (PTArr[index].frame == ca.fn && PTArr[index].v == 1) { // hit
+		ca.fn = PTArr[index].frame;
+		if (TESTFLOW == 1) printf("PT hit\n");
+	}
+	else { // miss
+		PAGEFAULTS++;
+		if (TESTFLOW == 1) printf("Page Fault\n");
+		disk_Access();
+	}
+	return;
+}
+
+
 // update the L2cache:
 void updateL2() {
+	if (TESTFLOW == 1) printf("updatingL2...\n");
 	CLOCKS += 12;
 	L2LRU(); // set global to correct LRU L2cache
 	unsigned int index = ca.L2Index;
 	if (L2_LRU == 'a') {
 		L2ArrA[index].frame = ca.fn;
 		L2ArrA[index].v = 1;
+		L2ArrA[0].used++;
 	}
 	else if (L2_LRU == 'b') {
 		L2ArrB[index].frame = ca.fn;
 		L2ArrB[index].v = 1;
+		L2ArrB[0].used++;
 	}
 	else if (L2_LRU == 'c') {
 		L2ArrC[index].frame = ca.fn;
 		L2ArrC[index].v = 1;
+		L2ArrC[0].used++;
 	}
 	else if (L2_LRU == 'd') {
 		L2ArrD[index].frame = ca.fn;
 		L2ArrD[index].v = 1;
+		L2ArrD[0].used++;
 	}
+	//printf("%s%u\n", "after update, L2A.frame: ", L2ArrA[index].frame);
+	//printf("%s%u\n", "after update, L2B.frame: ", L2ArrB[index].frame);
+	//printf("%s%u\n", "after update, L2C.frame: ", L2ArrC[index].frame);
+	//printf("%s%u\n", "after update, L2D.frame: ", L2ArrD[index].frame);
 }
 
 
 void updateTLB() {
 	// accessing TLB costs no clocks
+	if (TLBPTR == TLBSIZE) {
+		TLBPTR = 0;
+		FIFO++;
+	}// implement FIFO
+
+	for (int i = 0; i < TLBHITS; i++) { // if already in table, don't update
+		if (TLBArr[i].page == ca.pn) {
+			printf("Thrash!\n");
+			return;
+		}
+	}
+
 	TLBArr[TLBPTR].frame = ca.fn;
 	TLBArr[TLBPTR].page = ca.pn;
 	TLBArr[TLBPTR].v = 1;
@@ -452,13 +486,13 @@ void updateTLB() {
 }
 
 
-void updatePT() {
+void updatePT() { // crux of the problem: how to udpate ca.fn when disk acess
+	printf("updatingTLB\n");
 	CLOCKS += 50;
-	PTArr[ca.PTIndex].frame = FTArr[FREEPTR].frame >> 12; // pull in frame from freeTable
-	PTArr[ca.PTIndex].v == 1;
-	ca.fn = FTArr[FREEPTR].frame; // update ca frame with new frame
-	generatePA();
-	BUFSECTOR = ca.bufsector; // update the buffer
+	unsigned int newFrame = FREEPTR; // new frame is the next in free list
+	PTArr[ca.pn].frame = newFrame; // pull in frame from freeTable
+	PTArr[ca.pn].v == 1;
+	ca.fn = newFrame;
 	FREEPTR++;
 }
 

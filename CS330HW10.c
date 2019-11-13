@@ -1,6 +1,6 @@
 // Thomas Evon
 // CS 330
-// main file // 
+// main file //
 
 #include<string.h>
 #include<stdio.h>
@@ -58,19 +58,29 @@ int main()
 		ca.pn = pageNumber; // save pageNumber into struct
 		ca.L1Index = ca.va >> 4; // shift off byte_selctor bits
 		ca.L1Index = ca.L1Index & 511; // 511 = 0x1FF mask
-		ca.PTIndex = ca.pn & 262143; // 262143 = 0x3FFFF mask
 
 		// process everything - simulate virtual memory
-		if (TESTFLOW == 1) printf("\n%s%d%s \n\n", "current acess[", i, "]");
+		// printf("%s%d\n\n", "Current Cycle: ", i);
+		printf("\n%s%d%s \n\n", "current acess[", i, "]");
 		if (ca.typeOfAccess == 'I') {
-			if (TESTFLOW == 1) printf("L1I_Access\n");
+			// if (TESTFLOW == 1) printf("L1I_Access\n");
 			L1I_Access();
 		}
 		else {
-			if (TESTFLOW == 1) printf("L1D_Access\n");
+			// if (TESTFLOW == 1) printf("L1D_Access\n");
 			L1D_Access();
 		}
     }
+	//displayArray(1024);
 	generateReport(); // print out final report and exit
+	printf("%s%d\n", "Total Runs: ", tot);
+	printf("%s%d\n", "L2AISFULL: ", L2AISFULL);
+	printf("%s%d\n", "L2BISFULL: ", L2BISFULL);
+	printf("%s%d\n", "L2CISFULL: ", L2CISFULL);
+	printf("%s%d\n", "L2DISFULL: ", L2DISFULL);
+	printf("%s%d\n", "L2ArrAUsed: ", L2ArrA[0].used);
+	printf("%s%d\n", "L2ArrAUsed: ", L2ArrB[0].used);
+	printf("%s%d\n", "L2ArrAUsed: ", L2ArrC[0].used);
+	printf("%s%d\n", "L2ArrAUsed: ", L2ArrD[0].used);
 	return 0;
 }
