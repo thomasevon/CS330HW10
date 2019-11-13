@@ -36,7 +36,7 @@ void generateReport() {
 	printf("%s%d\n", "1. Total Clocks Required: ", CLOCKS);
 	printf("%s%d\n", "2. Total Page Faults: ", PAGEFAULTS);
 	printf("%s%d\n", "3. Total disk accesses: ", DISKACCESSES);
-	printf("%s%d\n", "4. Total buffer accesses: ", BUFACCESSES);
+	printf("%s%d\n", "4. Total buffer accesses: ", BUFHITS);
 
 	int L1Ihits = L1IHITS;
 	int L1Iaccesses = L1IACCESSES;
@@ -173,12 +173,6 @@ void init_arrays() {
 		PTArr[e].v = 0;
 		PTArr[e].d = 0;
 		PTArr[e].frame = 0;
-	}
-
-	unsigned int runner = 262144; // free list begins at 262144 = 0x40000
-	for (int f = 0; f < FTSIZE; f++) {
-		FTArr[f].frame = runner;
-		runner++; // shift to next available frame
 	}
 
 	for (int g = 0; g < BUFSIZE; g++) {
@@ -406,12 +400,19 @@ void updateL1() {
 
 
 void disk_Access() { // sector = pa >> 4;
-	 // buffer miss
-	 if (TESTFLOW == 1) printf("Disk Accessed\n");
+	if (TESTFLOW == 1) printf("Disk Accessed\n");
+	if (ca.bufsector == BUFSECTOR) { // buffer miss
+		BUFHITS++;
+		CLOCKS += 200;
+		updatePT();
+	}
+	else {
 	DISKACCESSES++;
 	CLOCKS +=  5000;
-		// update page table:
 	updatePT();
+	printf("%s%u\n", "ca.bufsector to be loaded in: ", ca.bufsector);
+	BUFSECTOR = ca.bufsector;
+	}
 	return;
 }
 

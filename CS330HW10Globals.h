@@ -24,7 +24,7 @@ int L1DACCESSES;				// total L1D total accesses
 int L1DHITS;					// total L1D hits
 int	L2ACCESSES;					// total L2 accesses
 int L2HITS;						// total L2 hits
-int BUFACCESSES;				// total buffer accesses
+int BUFHITS;					// total buffer accesses
 int DISKACCESSES;				// total disk accesses
 int TLBACCESSES;				// total TLB accesses
 int TLBHITS;					// total TLB hits
@@ -89,7 +89,6 @@ struct L2 L2;
 struct TLB TLB;
 struct PT PT;
 struct BUF BUF;
-struct FT FT;
 
 // declar arrays:
 struct L1I L1IArr[L1SIZE];
@@ -101,6 +100,5 @@ struct L2 L2ArrD[L2SIZE];
 struct TLB TLBArr[TLBSIZE];
 struct PT PTArr[PTSIZE];
 struct BUF BUFArr[BUFSIZE];
-struct FT FTArr[FTSIZE];
 
 #endif

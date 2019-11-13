@@ -61,7 +61,7 @@ int main()
 
 		// process everything - simulate virtual memory
 		// printf("%s%d\n\n", "Current Cycle: ", i);
-		printf("\n%s%d%s \n\n", "current acess[", i, "]");
+		// printf("\n%s%d%s \n\n", "current acess[", i, "]");
 		if (ca.typeOfAccess == 'I') {
 			// if (TESTFLOW == 1) printf("L1I_Access\n");
 			L1I_Access();
